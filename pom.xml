@@ -15,6 +15,9 @@
         <lombok.version>1.18.20</lombok.version>
         <slf4j.version>1.7.36</slf4j.version>
         <logback.version>1.2.9</logback.version>
+        <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -23,12 +26,16 @@
             <artifactId>vertx-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-rx-java</artifactId>
+            <artifactId>vertx-rx-java3</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -44,190 +51,288 @@
         </dependency>
     </dependencies>
 
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <main-class>io.vertx.core.Launcher</main-class> <!-- 此处为主入口-->
+                                        <main-verticle>com.codezf.MainServer</main-verticle> <!-- 此处为主入口-->
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <artifactSet/>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/lib</outputDirectory>
+                            <!--不需要导出的jar-->
+                            <excludeArtifactIds>
+                                spring-boot-devtools,junit
+                            </excludeArtifactIds>
+                            <!--不需要导出的jar-->
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven-plugin.version}</version>
+                <configuration>
+                    <mainClass>io.vertx.core.Launcher</mainClass>
+                    <arguments>
+                        <argument>run</argument>
+                        <argument>${main.verticle}</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>io.vertx</groupId>
-                <artifactId>vertx-rx-java</artifactId>
+                <artifactId>vertx-stack-depchain</artifactId>
                 <version>${vert.x.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-core</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-client</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-proxy</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-tcnative-boringssl-static</artifactId>
-                <version>2.0.34.Final</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-mongo-client</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-properties</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-jdbc</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-jdbc-client</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-sql-client-templates</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-grpc-server</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-grpc-client</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-jwt</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-oauth2</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-dropwizard-metrics</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-hazelcast</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-                <version>2.3.4</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-handlebars</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-jade</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-mvel</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-thymeleaf</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-freemarker</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-pebble</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-templ-rocker</artifactId>
-                <version>${vert.x.version}</version>
-                <classifier>shaded</classifier>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-json-schema</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-validation</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web-openapi</artifactId>
-                <version>${vert.x.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
             </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!--    <dependencyManagement>-->
+    <!--        <dependencies>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-rx-java</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-core</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-client</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-proxy</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.netty</groupId>-->
+    <!--                <artifactId>netty-tcnative-boringssl-static</artifactId>-->
+    <!--                <version>2.0.34.Final</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-mongo-client</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-auth-properties</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-auth-jdbc</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-jdbc-client</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-sql-client-templates</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-grpc-server</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-grpc-client</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-auth-jwt</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-auth-oauth2</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-dropwizard-metrics</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-hazelcast</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>org.hsqldb</groupId>-->
+    <!--                <artifactId>hsqldb</artifactId>-->
+    <!--                <version>2.3.4</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-handlebars</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-jade</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-mvel</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-thymeleaf</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-freemarker</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-pebble</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-templ-rocker</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--                <classifier>shaded</classifier>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-json-schema</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-validation</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+    <!--            <dependency>-->
+    <!--                <groupId>io.vertx</groupId>-->
+    <!--                <artifactId>vertx-web-openapi</artifactId>-->
+    <!--                <version>${vert.x.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>org.projectlombok</groupId>-->
+    <!--                <artifactId>lombok</artifactId>-->
+    <!--                <version>${lombok.version}</version>-->
+    <!--                <scope>provided</scope>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>org.slf4j</groupId>-->
+    <!--                <artifactId>slf4j-api</artifactId>-->
+    <!--                <version>${slf4j.version}</version>-->
+    <!--            </dependency>-->
+
+    <!--            <dependency>-->
+    <!--                <groupId>ch.qos.logback</groupId>-->
+    <!--                <artifactId>logback-classic</artifactId>-->
+    <!--                <version>${logback.version}</version>-->
+    <!--            </dependency>-->
+    <!--        </dependencies>-->
+    <!--    </dependencyManagement>-->
 </project>
