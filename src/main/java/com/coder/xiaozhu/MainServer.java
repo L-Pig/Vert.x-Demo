@@ -1,4 +1,4 @@
-package com.codezf;
+package com.coder.xiaozhu;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -32,7 +32,6 @@ public class MainServer extends AbstractVerticle {
     public Completable rxStart() {
         HttpServer httpServer = vertx.createHttpServer();
         Single<HttpServer> listen = httpServer
-
                 .requestHandler(scanRouter())
                 .listen(9999);
         Disposable ignore = listen
