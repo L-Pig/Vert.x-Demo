@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class UserController {
@@ -27,44 +26,42 @@ public class UserController {
 
     private void handleRoot(RoutingContext context) {
         System.out.println(context.request().uri());
-        JsonObject put = new JsonObject().put("code", 200).put("msg", "Hello World!").put("data", null);
+        JsonObject put = new JsonObject()
+                .put("code", 200)
+                .put("msg", "Hello World!")
+                .put("data", null);
 
         context.json(put);
     }
 
-    private void handleLogin(RoutingContext context)  {
+    private void handleLogin(RoutingContext context) {
+
+//        MainServer.JSON pojo = context.body().asPojo(MainServer.JSON.class);
 
         GlobalConst.jdbcClient.getConnection(conn -> {
-            if (conn.failed()) {
-                throw new RuntimeException(conn.cause());
+            if (conn.succeeded()) {
+                conn.result().queryWithParams("select * from typecho_users where name = ?", new JsonArray().add(context.request().getParam("name")), res -> {
+                    if (res.succeeded()) {
+                        List<JsonObject> rows = res.result().getRows();
+                        if (rows != null && !rows.isEmpty()) {
+                            MainServer.User user = rows.get(0).mapTo(MainServer.User.class);
+
+                            context.json(new JsonObject()
+                                    .put("code", 200)
+                                    .put("msg", "successfully")
+                                    .put("data", user));
+                        } else {
+                            context.json(new JsonObject()
+                                    .put("code", 404)
+                                    .put("msg", "user not found")
+                                    .put("data", null));
+                        }
+                    }
+                    if (res.failed()) {
+                        log.error("error:", res.cause());
+                    }
+                });
             }
-            long l = System.currentTimeMillis();
-            conn.result().queryWithParams("select * from typecho_users where name = ?", new JsonArray().add(context.request().getParam("name")), res -> {
-                if (res.failed()) {
-                    throw new RuntimeException(res.cause());
-                }
-                log.info("time test:{}",System.currentTimeMillis() - l);
-                List<JsonObject> rows = res.result().getRows();
-                if (rows == null || rows.isEmpty()) {
-                    context.json(new JsonObject()
-                            .put("code", 404)
-                            .put("msg", "user not found")
-                            .put("data", null));
-                    return;
-                }
-                MainServer.User user = rows
-                        .get(0)
-                        .mapTo(MainServer.User.class);
-
-
-
-                context.json(new JsonObject()
-                        .put("code", 200)
-                        .put("msg", "successfully")
-                        .put("data", user));
-
-
-            });
         });
     }
 }
