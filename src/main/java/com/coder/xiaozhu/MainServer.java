@@ -67,7 +67,6 @@ public class MainServer extends AbstractVerticle {
                 .handler(this::logUri);
 
         UserController.INSTANCE.pushRouter(router, vertx);
-
         return router;
     }
 
